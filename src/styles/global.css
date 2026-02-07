@@ -1,0 +1,59 @@
+:root {
+  --bg-color: #333;
+  --text-color: #ccf;
+  --accent-color: #39c;
+  --accent-dark: #326273;
+}
+
+body {
+  background-image: url("/img/back.gif");
+  background-repeat: repeat;
+  background-size: auto;
+  image-rendering: pixelated;
+  color: var(--text-color);
+  color: #ccf;
+  /*font-family: sans-serif;*/
+  font-family: "MS UI Gothic", sans-serif;
+  /*font-family: 'Terminess Nerd Font', monospace;
+            https://coolors.co/cb904d-92bfb1-080819-326273-dfb2f4
+
+            */
+  margin: 10px auto;
+  max-width: 1024px;
+}
+
+a,
+a:link,
+a:visited {
+  color: var(--accent-color);
+  color: #39c;
+}
+
+a:active {
+  color: var(--accent-dark);
+  color: #39c;
+}
+
+h1 {
+  color: var(--accent-color);
+  color: #39c;
+  font-family: "Verdana", sans-serif;
+  margin: 0;
+}
+h2 {
+  font-family: "Verdana", sans-serif;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #39c;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+table {
+  border-color: var(--accent-color);
+}
