@@ -1,5 +1,14 @@
 ---
 layout: ../layouts/main.astro
+
+title: Haciendo un pequeño blog en php
+author: SuliShade
+description: "Investigando como hacer un blog sin hacer una odisea"
+#image:
+#    url: "https://docs.astro.build/default-og-image.png"
+#    alt: "The word astro against an illustration of planets and stars."
+pubDate: 2025 07 19
+tags: ["blog", "test"]
 ---
 
 ## Investigación sobre cómo poder escribir tranquilamente en Neocities sin hacer una odisea

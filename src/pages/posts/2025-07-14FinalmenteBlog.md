@@ -1,5 +1,14 @@
 ---
 layout: ../layouts/main.astro
+
+title: Finalmente hay blog!
+author: SuliShade
+description: "el primer post del blog!"
+#image:
+#    url: "https://docs.astro.build/default-og-image.png"
+#    alt: "The word astro against an illustration of planets and stars."
+pubDate: 2025 07 14
+tags: ["blog", "test"]
 ---
 ## Finalmente hay blog!
 

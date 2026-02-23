@@ -1,24 +1,54 @@
 ---
 import MainLayout from "./layouts/main.astro";
+
 import Nav from "./components/nav.astro";
+import BlogPost from "./components/BlogPost.astro";
+
+const allPosts = Object.values(
+  import.meta.glob("./posts/*.md", { eager: true }),
+);
+
+//ordenar por fecha mas reciente, chatgpt de manual
+const sortedPosts = allPosts.sort((a: any, b: any) => {
+  return (
+    new Date(b.frontmatter.pubDate).getTime() -
+    new Date(a.frontmatter.pubDate).getTime()
+  );
+});
+
+const tags = [
+  ...new Set(allPosts.map((post: any) => post.frontmatter.tags).flat()),
+];
+const pageTitle = "Tag Index";
 ---
 
 <MainLayout title="Suli Shade Blog" description="si">
   <center>
-    <img src="/img/gifs/__iwakura_lain_serial_experiments_lain_drawn_by_cloudyooooo__371c71c938726a324bf08c58518caf2f.gif" alt="" width="200" />
+    <img
+      src="/img/gifs/__iwakura_lain_serial_experiments_lain_drawn_by_cloudyooooo__371c71c938726a324bf08c58518caf2f.gif"
+      alt=""
+      width="200"
+    />
   </center>
+
+  {
+    tags.map((tag) => (
+      <>
+        <a href={`/tags/${tag}`}>{tag}</a>
+      </>
+    ))
+  }
+
   <ul>
-    <li>
-      2025 11 09 -
-      <a href="/posts/2025-11-09Animes">Lista de animes vistos</a>
-    </li>
-    <li>
-      2025 07 19 -
-      <a href="/posts/2025-07-19EscribirEnPaz">Investigacion de como escribir en paz con php</a>
-    </li>
-    <li>
-      2025 07 14 -
-      <a href="/posts/2025-07-14FinalmenteBlog">Finalmente hay blog!</a>
-    </li>
+    {
+      allPosts.map((post: any) => (
+        <BlogPost
+          url={post.url}
+          title={post.frontmatter.title}
+          date={post.frontmatter.pubDate}
+          tags={post.frontmatter.tags}
+        />
+      ))
+    }
   </ul>
 </MainLayout>

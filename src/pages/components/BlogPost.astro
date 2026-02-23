@@ -1,0 +1,17 @@
+---
+const { title, url, date, tags = [] } = Astro.props;
+---
+
+<li>
+  {date} -
+  <a href={url}>{title}</a>
+  tags:
+
+  {
+    tags.map((tag) => (
+      <>
+        - <a href={`/tags/${tag}`}>{tag}</a>
+      </>
+    ))
+  }
+</li>

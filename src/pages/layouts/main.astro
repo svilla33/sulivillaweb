@@ -1,7 +1,8 @@
 ---
 import Nav from "../components/nav.astro";
 const { title = "Suli Shade" } = Astro.props;
-const { description = "un random mas de quiere hacer su pag web" } = Astro.props;
+const { description = "un random mas de quiere hacer su pag web" } =
+  Astro.props;
 import "../../styles/global.css";
 ---
 
@@ -12,7 +13,12 @@ import "../../styles/global.css";
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="stylesheet" href="style/style.css" />
-    <link rel="alternate" type="application/rss+xml" title="Suli Shade RSS" href="/rss.xml" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Suli Shade RSS"
+      href="/rss.xml"
+    />
   </head>
   <!--
     <Nav />
