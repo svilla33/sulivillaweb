@@ -8,7 +8,7 @@ description: "Investigando como hacer un blog sin hacer una odisea"
 #    url: "https://docs.astro.build/default-og-image.png"
 #    alt: "The word astro against an illustration of planets and stars."
 pubDate: 2025 07 19
-tags: ["blog", "test"]
+tags: ["programacion"]
 ---
 
 ## Investigación sobre cómo poder escribir tranquilamente en Neocities sin hacer una odisea
@@ -39,4 +39,3 @@ También voy a anexar algunas páginas web que he encontrado si quieres escribir
 - [https://markdowntohtml.com/](https://markdowntohtml.com/)
 
 Espero que te haya gustado mi aventura con mi página web :3
-
