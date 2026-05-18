@@ -1,30 +1,25 @@
 :root {
-  --bg-color: #333;
-  --text-color: #ccf;
-  --accent-color: #39c;
+  --bg-color: #011627;
+  --text-color: LightCyan;
+  --accent-color: SteelBlue;
   --accent-dark: #326273;
 }
 
 body {
-  background-image: url("/img/back.gif");
   background-repeat: repeat;
   background-size: auto;
   image-rendering: pixelated;
   color: var(--text-color);
-  color: #ccf;
-  /*font-family: sans-serif;*/
-  font-family: "MS UI Gothic", sans-serif;
-  /*font-family: 'Terminess Nerd Font', monospace;
-            https://coolors.co/cb904d-92bfb1-080819-326273-dfb2f4
-
-            */
+  background-color: var(--bg-color);
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-size: large;
   margin: 0px auto;
   max-width: 1024px;
-  font-size: large;
+
   letter-spacing: 0.02em;
 }
 
-p,h2,h1,h3,h4,h5{
+p,h2,h3,h4,h5{
   margin: 5px;
 }
 
@@ -32,20 +27,14 @@ a,
 a:link,
 a:visited {
   color: var(--accent-color);
-  color: #39c;
+  color: var(--accent-color);
 }
 
 a:active {
   color: var(--accent-dark);
-  color: #39c;
+  color: var(--accent-color);
 }
 
-h1 {
-  color: var(--accent-color);
-  color: #39c;
-  font-family: "Verdana", sans-serif;
-  margin: 0;
-}
 
 h2 {
   font-family: "Verdana", sans-serif;
@@ -53,7 +42,7 @@ h2 {
 
 hr {
   border: none;
-  border-top: 1px solid #39c;
+  border-top: 1px solid var(--accent-color);
 }
 
 img {
@@ -62,7 +51,12 @@ img {
   margin: 0px;
 }
 
-table {
+table, td, th {
+  border: 1px solid;
+  padding: 10px;
   border-color: var(--accent-color);
 }
 
+table {
+  border-collapse: collapse;
+}
