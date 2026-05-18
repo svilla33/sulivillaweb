@@ -1,14 +1,22 @@
 ---
 import MainLayout from "./layouts/main.astro";
 ---
+<style>
+
+th, td {
+  padding: 10px;
+}s
+</style>
 
 <MainLayout title="Libreta" description="Links utiles">
   <p>
     Recopilación de sitios y herramientas útiles y geniales que encuentro por
     ahí, recomendado darles un vistazo!
   </p>
-
-  <h2>Software</h2>
+  <table >
+    <tr>
+      <td valign="top">
+          <h2>Software</h2>
   windows
   <ul>
     <a href="https://github.com/microsoft/winget-cli">winget</a>: Deja de
@@ -46,7 +54,9 @@ import MainLayout from "./layouts/main.astro";
     linux <br />
   </ul>
 
-  <h2>Juegos</h2>
+      </td>
+      <td valign="top">
+          <h2>Juegos</h2>
   web apps
   <ul>
     <a href="https://webosumania.com/">Web Osumania</a>: Juega a osumania
@@ -68,15 +78,17 @@ import MainLayout from "./layouts/main.astro";
     <a href="https://emulation.gametechwiki.com/index.php/Main_Page"
       >Emulation General Wiki</a
     > La mejor wiki para encontrar emuladores!
+    <br>
+    <a href="https://www.myabandonware.com/">My Abandomware</a>:
+    pagina que recopila juegos que fueron abandonados por sus creadores o su
+    desarroladora
   </ul>
-
   <h2>web apps</h2>
   <ul>
     <a href="https://www.canva.com/" target="_blank" rel="noopener noreferrer"
       >canva</a
     >: editor de imágenes simple con plantillas
   </ul>
-
   <h2>Otras Galaxias</h2>
   Revive tu windows xp
   <ul>
@@ -101,4 +113,18 @@ import MainLayout from "./layouts/main.astro";
     >
     <br />
   </ul>
+      </td>
+
+    </tr>
+  </table>
+
+
+
+
+
+
+  
+
+  
 </MainLayout>
+

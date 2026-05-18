@@ -1,5 +1,5 @@
 ---
-layout: ../layouts/main.astro
+layout: ../layouts/layBlog.astro
 
 title: Finalmente hay blog!
 author: SuliShade

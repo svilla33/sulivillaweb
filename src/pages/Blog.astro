@@ -1,5 +1,5 @@
 ---
-import MainLayout from "./layouts/main.astro";
+import MainLayout from "./layouts/layBlog.astro";
 
 import Nav from "./components/nav.astro";
 import BlogPost from "./components/BlogPost.astro";
@@ -24,22 +24,26 @@ const pageTitle = "Tag Index";
 
 <MainLayout title="Suli Shade Blog" description="si">
   <center>
-    <img
+    <table>
+  <tr>
+    <td valign="top">
+      <img
       src="/img/gifs/__iwakura_lain_serial_experiments_lain_drawn_by_cloudyooooo__371c71c938726a324bf08c58518caf2f.gif"
       alt=""
       width="200"
     />
-  </center>
-
-  {
+    <br>
+     {
     tags.map((tag) => (
       <>
         <a href={`/tags/${tag}`}>{tag}</a>
+        <br>
       </>
     ))
   }
-
-  <ul>
+    </td>
+    <td valign="top">
+      <ul>
     {
       allPosts.map((post: any) => (
         <BlogPost
@@ -51,4 +55,12 @@ const pageTitle = "Tag Index";
       ))
     }
   </ul>
+    </td>
+  </tr>
+</table>
+  </center>
+
+ 
+
+  
 </MainLayout>

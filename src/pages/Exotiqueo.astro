@@ -1,15 +1,40 @@
 ---
-import MainLayout from "./layouts/main.astro";
+import MainLayout from "./layouts/exotic.astro";
+import Nav from "./components/nav.astro";
+
 ---
+<style>
+  body{
+
+    max-width: 1024px;     
+    image-rendering: pixelated;
+    margin: 10px auto;  
+    background-color: steelblue;    
+    font-family:
+      Tahoma,
+      Verdana,
+      "Segoe UI",
+      Arial,
+      sans-serif;
+    
+    color: aliceblue;
+  }
+</style>
 
 <MainLayout title="EXOTIQUEO" description="si">
   <center>
-    <h2>Bienvenido al rincon el exotiqueo sientete libre de explorar</h2>
+    <Nav />
+  </center>
+  
+  Bienvenido al rincon el exotiqueo sientete libre de explorar
+  <center>
+    
     <!-- Banners -->
-    <br />
+    
 
     <iframe src="/collages/Win XP pro tan/index.html" width="512" height="512" frameborder="0"></iframe>
     <iframe src="/collages/chii/index.html" width="512" height="512" frameborder="0"></iframe>
+    
     <!--Hacer un de mukou aoi -->
 
     <!--

@@ -1,5 +1,5 @@
 ---
-layout: ../layouts/main.astro
+layout: ../layouts/layBlog.astro
 
 title: Haciendo un pequeño blog en php
 author: SuliShade

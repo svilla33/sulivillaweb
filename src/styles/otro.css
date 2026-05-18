@@ -1,0 +1,16 @@
+
+
+
+
+body{
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: large;
+    max-width: 1024px;     
+    image-rendering: pixelated;
+    margin: 10px auto;  
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+}
+
+
+
