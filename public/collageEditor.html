@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collage Editor • Capas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        #canvas {
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+            background: white;
+            overflow: hidden;
+        }
+        .layer {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            box-sizing: border-box;
+        }
+        .layer.selected {
+            outline: 3px solid #3b82f6;
+            outline-offset: 4px;
+        }
+        .resize-handle {
+            position: absolute;
+            bottom: -8px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            background: #3b82f6;
+            border: 3px solid white;
+            border-radius: 9999px;
+            box-shadow: 0 0 0 2px #3b82f6;
+            cursor: nwse-resize;
+            z-index: 20;
+        }
+        /* Custom Scrollbar para el panel de capas */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white overflow-hidden">
+    <div class="flex h-screen">
+        <div class="w-72 bg-zinc-900 border-r border-zinc-800 p-6 flex flex-col z-10 relative">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-9 h-9 bg-blue-600 rounded-2xl flex items-center justify-center text-xl font-bold">C</div>
+                <div>
+                    <h1 class="text-2xl font-semibold tracking-tighter">Collage Editor</h1>
+                    <p class="text-xs text-zinc-500">Sistema de Capas</p>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <p class="text-sm text-zinc-400 mb-3">Tamaño del lienzo</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-zinc-500 block mb-1">Ancho</label>
+                        <input id="width" type="number" value="512" 
+                               class="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 w-full focus:outline-none focus:border-blue-600 text-lg">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-500 block mb-1">Alto</label>
+                        <input id="height" type="number" value="512" 
+                               class="bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 w-full focus:outline-none focus:border-blue-600 text-lg">
+                    </div>
+                </div>
+                <button onclick="applyCanvasSize()" 
+                        class="mt-4 w-full bg-blue-600 hover:bg-blue-500 transition py-3 rounded-2xl font-semibold">
+                    Aplicar tamaño
+                </button>
+            </div>
+
+            <div class="mb-8">
+                <p class="text-sm text-zinc-400 mb-3">Añadir imágenes</p>
+                <label id="drop-zone" 
+                       class="block border-2 border-dashed border-zinc-700 hover:border-blue-500 rounded-3xl h-40 flex items-center justify-center cursor-pointer transition">
+                    <div class="text-center pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mx-auto text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16v-4m0 0l4 4m-4-4l4-4m12 4v4m0-4l-4 4m4-4l-4-4" />
+                        </svg>
+                        <p class="mt-3 text-sm">Arrastra aquí o haz clic</p>
+                        <p class="text-xs text-zinc-500 mt-1">PNG • JPG • GIF</p>
+                    </div>
+                </label>
+                <input type="file" id="file-input" multiple accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+            </div>
+
+            <div class="mt-auto flex flex-col gap-3">
+                <button onclick="clearAll()" 
+                        class="w-full bg-zinc-800 hover:bg-red-500/20 hover:text-red-400 text-zinc-300 py-3 rounded-2xl font-semibold transition">
+                    Limpiar Lienzo
+                </button>
+                <button onclick="exportToFolder()" 
+                        class="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-3xl font-semibold flex items-center justify-center gap-3 text-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17l-4-4m0 0l-4 4m4-4v12M3 7l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                    Exportar carpeta
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center bg-zinc-950 p-8 overflow-auto relative" id="canvas-wrapper">
+            <div id="canvas" class="relative bg-white" style="width: 512px; height: 512px;"></div>
+        </div>
+
+        <div class="w-80 bg-zinc-900 border-l border-zinc-800 flex flex-col z-10 relative">
+            
+            <div class="p-6 flex-1 flex flex-col overflow-y-auto">
+                <h2 class="text-xl font-semibold mb-6">Propiedades</h2>
+                
+                <div id="no-selection" class="flex-1 flex items-center justify-center text-zinc-500 text-center">
+                    <div>
+                        <div class="text-6xl mb-4 opacity-50">🖼️</div>
+                        <p>Haz clic en una capa<br>para editarla</p>
+                    </div>
+                </div>
+
+                <div id="properties" class="hidden flex flex-col gap-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-widest text-zinc-500 block mb-1">Eje X</span>
+                            <input id="prop-x" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm" oninput="liveUpdate()">
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase tracking-widest text-zinc-500 block mb-1">Eje Y</span>
+                            <input id="prop-y" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm" oninput="liveUpdate()">
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase tracking-widest text-zinc-500 block mb-1">Ancho</span>
+                            <input id="prop-w" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm" oninput="liveUpdate()">
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase tracking-widest text-zinc-500 block mb-1">Alto</span>
+                            <input id="prop-h" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm" oninput="liveUpdate()">
+                        </div>
+                    </div>
+
+                    <label class="flex items-center gap-3 text-sm cursor-pointer bg-zinc-800/50 p-3 rounded-xl border border-zinc-800">
+                        <input id="lock-ratio" type="checkbox" class="w-4 h-4 accent-blue-600" checked>
+                        <span class="text-zinc-300">Mantener proporción</span>
+                    </label>
+
+                    <div>
+                        <p class="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Rotación</p>
+                        <div class="flex items-center gap-3">
+                            <input id="prop-rot" type="range" min="0" max="360" value="0" class="flex-1 accent-blue-600" oninput="liveUpdate(this)">
+                            <input id="prop-rot-num" type="number" min="0" max="360" value="0" class="w-16 bg-zinc-800 border border-zinc-700 rounded-xl px-2 py-2 text-center text-sm" oninput="liveUpdate(this)">
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Opacidad</p>
+                        <input id="prop-opacity" type="range" min="0" max="1" step="0.01" value="1" class="w-full accent-blue-600" oninput="liveUpdate()">
+                    </div>
+
+                    <button onclick="deleteSelected()" class="mt-2 py-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-2xl font-semibold transition">
+                        Eliminar Capa
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 bg-zinc-950/50 border-t border-zinc-800 flex flex-col h-1/2">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold tracking-wide flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        CAPAS
+                    </h2>
+                    <button onclick="bringToFront()" title="Mover al frente" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg transition">
+                        Traer al tope
+                    </button>
+                </div>
+                
+                <div id="layers-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                    </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let canvas = document.getElementById('canvas');
+        let layers = [];
+        let selectedIndex = -1;
+        let currentZ = 100;
+        let isDragging = false;
+        let isResizing = false;
+        let dragOffsetX = 0, dragOffsetY = 0;
+        let resizeStartW = 0, resizeStartH = 0;
+        let resizeStartX = 0, resizeStartY = 0;
+
+        function applyCanvasSize() {
+            const w = parseInt(document.getElementById('width').value) || 512;
+            const h = parseInt(document.getElementById('height').value) || 512;
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+        }
+
+        function addImage(file) {
+            const id = Date.now();
+            const url = URL.createObjectURL(file);
+
+            const layerDiv = document.createElement('div');
+            layerDiv.className = 'layer';
+            layerDiv.style.left = '80px';
+            layerDiv.style.top = '80px';
+            layerDiv.style.zIndex = currentZ++;
+            layerDiv.dataset.id = id;
+
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            img.style.pointerEvents = 'none';
+            layerDiv.appendChild(img);
+
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle';
+            layerDiv.appendChild(handle);
+
+            canvas.appendChild(layerDiv);
+
+            const layerObj = {
+                id: id,
+                file: file,
+                name: file.name || `Imagen ${layers.length + 1}`,
+                div: layerDiv,
+                img: img,
+                x: 80,
+                y: 80,
+                w: 100,
+                h: 100,
+                rot: 0,
+                opacity: 1,
+                ratio: 1,
+                zIndex: layerDiv.style.zIndex,
+                visible: true
+            };
+
+            img.onload = () => {
+                const natW = img.naturalWidth;
+                const natH = img.naturalHeight;
+
+                layerObj.ratio = natW / natH;
+
+                // usar tamaño ORIGINAL
+                layerObj.w = natW;
+                layerObj.h = natH;
+
+                layerDiv.style.width = natW + 'px';
+                layerDiv.style.height = natH + 'px';
+
+                if (selectedIndex === layers.indexOf(layerObj)) {
+                    updatePanelValues(layerObj);
+                }
+            };
+
+            layers.push(layerObj);
+            setupLayerEvents(layerDiv, layerObj);
+            selectLayer(layerObj);
+        }
+        // --- SISTEMA DE CAPAS (UI) ---
+        function renderLayersList() {
+            const list = document.getElementById('layers-list');
+            list.innerHTML = '';
+            
+            // Ordenar visualmente de mayor z-index (arriba) a menor (abajo)
+            const sortedLayers = [...layers].sort((a, b) => b.zIndex - a.zIndex);
+            
+            if (sortedLayers.length === 0) {
+                list.innerHTML = '<div class="h-full flex items-center justify-center text-xs text-zinc-600">No hay capas en el lienzo</div>';
+                return;
+            }
+
+            sortedLayers.forEach((layer, index) => {
+                const item = document.createElement('div');
+                const isSelected = selectedIndex !== -1 && layers[selectedIndex].id === layer.id;
+                
+                // Contenedor de la capa en la lista
+                item.className = `flex items-center gap-3 p-2.5 rounded-xl cursor-pointer border transition-all ${
+                    isSelected 
+                    ? 'bg-blue-600/20 border-blue-500/50' 
+                    : 'bg-zinc-800/50 border-transparent hover:bg-zinc-800'
+                }`;
+                if(!layer.visible) item.classList.add('opacity-50');
+
+                item.onclick = () => {
+                    if(!layer.visible) toggleVisibility(layer); // Mostrar si estaba oculta
+                    selectLayer(layer);
+                };
+
+                // Ojo (Visibilidad)
+                const visBtn = document.createElement('button');
+                visBtn.className = 'text-zinc-400 hover:text-white px-1';
+                visBtn.innerHTML = layer.visible 
+                    ? `<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>` 
+                    : `<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>`;
+                visBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleVisibility(layer);
+                };
+
+                // Miniatura
+                const thumb = document.createElement('img');
+                thumb.src = layer.img.src;
+                thumb.className = 'w-8 h-8 rounded bg-zinc-900 object-cover border border-zinc-700';
+
+                // Título
+                const title = document.createElement('span');
+                title.className = `text-xs flex-1 truncate ${isSelected ? 'text-blue-100 font-medium' : 'text-zinc-300'}`;
+                title.innerText = layer.name;
+
+                // Controles (Arriba / Abajo)
+                const controls = document.createElement('div');
+                controls.className = 'flex flex-col gap-0.5';
+                
+                const btnUp = document.createElement('button');
+                btnUp.innerHTML = '▲';
+                btnUp.className = 'text-[9px] text-zinc-500 hover:text-white px-1 leading-none';
+                btnUp.title = "Subir capa";
+                btnUp.onclick = (e) => { e.stopPropagation(); moveLayerZ(layer, 1); };
+
+                const btnDown = document.createElement('button');
+                btnDown.innerHTML = '▼';
+                btnDown.className = 'text-[9px] text-zinc-500 hover:text-white px-1 leading-none';
+                btnDown.title = "Bajar capa";
+                btnDown.onclick = (e) => { e.stopPropagation(); moveLayerZ(layer, -1); };
+
+                if (index !== 0) controls.appendChild(btnUp); // Mostrar flecha arriba si no es la primera
+                if (index !== sortedLayers.length - 1) controls.appendChild(btnDown); // Mostrar flecha abajo si no es la última
+
+                item.appendChild(visBtn);
+                item.appendChild(thumb);
+                item.appendChild(title);
+                item.appendChild(controls);
+                list.appendChild(item);
+            });
+        }
+
+        function toggleVisibility(layer) {
+            layer.visible = !layer.visible;
+            layer.div.style.display = layer.visible ? 'block' : 'none';
+            if (!layer.visible && selectedIndex !== -1 && layers[selectedIndex].id === layer.id) {
+                // Deseleccionar si la ocultamos
+                layers.forEach(l => l.div.classList.remove('selected'));
+                selectedIndex = -1;
+                document.getElementById('properties').classList.add('hidden');
+                document.getElementById('no-selection').classList.remove('hidden');
+            }
+            renderLayersList();
+        }
+
+        function moveLayerZ(layer, direction) {
+            // Ordenar de menor a mayor zIndex real para la lógica
+            const sortedAsc = [...layers].sort((a, b) => a.zIndex - b.zIndex);
+            const idx = sortedAsc.findIndex(l => l.id === layer.id);
+            
+            if (direction === 1 && idx < sortedAsc.length - 1) { // Subir
+                const target = sortedAsc[idx + 1];
+                const tempZ = layer.zIndex;
+                layer.zIndex = target.zIndex;
+                target.zIndex = tempZ;
+            } else if (direction === -1 && idx > 0) { // Bajar
+                const target = sortedAsc[idx - 1];
+                const tempZ = layer.zIndex;
+                layer.zIndex = target.zIndex;
+                target.zIndex = tempZ;
+            }
+            
+            // Aplicar al DOM
+            layers.forEach(l => l.div.style.zIndex = l.zIndex);
+            renderLayersList();
+        }
+
+        function bringToFront() {
+            if (selectedIndex === -1) return;
+            const layer = layers[selectedIndex];
+            currentZ++;
+            layer.zIndex = currentZ;
+            layer.div.style.zIndex = currentZ;
+            renderLayersList();
+        }
+        // -----------------------------
+
+        function setupLayerEvents(layerDiv, layerObj) {
+            layerDiv.addEventListener('mousedown', (e) => {
+                if(!layerObj.visible) return;
+                if (e.target.classList.contains('resize-handle')) {
+                    startResize(e, layerObj);
+                    return; 
+                }
+                selectLayer(layerObj);
+                startDrag(e, layerObj);
+            });
+        }
+
+        function startDrag(e, layerObj) {
+            isDragging = true;
+            const rect = layerObj.div.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        function startResize(e, layerObj) {
+            isResizing = true;
+            resizeStartW = layerObj.w;
+            resizeStartH = layerObj.h;
+            resizeStartX = e.clientX;
+            resizeStartY = e.clientY;
+            selectLayer(layerObj);
+            e.stopImmediatePropagation();
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        function onMouseMove(e) {
+            if (!isDragging && !isResizing) return;
+            if (selectedIndex === -1) return;
+            const layerObj = layers[selectedIndex];
+
+            if (isDragging) {
+                const canvasRect = canvas.getBoundingClientRect();
+                let newX = e.clientX - canvasRect.left - dragOffsetX;
+                let newY = e.clientY - canvasRect.top - dragOffsetY;
+
+                layerObj.div.style.left = newX + 'px';
+                layerObj.div.style.top = newY + 'px';
+                layerObj.x = newX;
+                layerObj.y = newY;
+            }
+
+            if (isResizing) {
+                const dx = e.clientX - resizeStartX;
+                const dy = e.clientY - resizeStartY;
+
+                let newW = resizeStartW + dx;
+                let newH = resizeStartH + dy;
+
+                newW = Math.max(50, newW);
+                newH = Math.max(50, newH);
+
+                if (document.getElementById('lock-ratio').checked) {
+                    newH = newW / layerObj.ratio;
+                }
+
+                layerObj.div.style.width = newW + 'px';
+                layerObj.div.style.height = newH + 'px';
+                layerObj.w = newW;
+                layerObj.h = newH;
+            }
+            
+            updatePanelValues(layerObj);
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+            isResizing = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        function updatePanelValues(layerObj) {
+            if (!layerObj) return;
+            document.getElementById('prop-x').value = Math.round(layerObj.x);
+            document.getElementById('prop-y').value = Math.round(layerObj.y);
+            document.getElementById('prop-w').value = Math.round(layerObj.w);
+            document.getElementById('prop-h').value = Math.round(layerObj.h);
+            document.getElementById('prop-rot').value = layerObj.rot;
+            document.getElementById('prop-rot-num').value = layerObj.rot;
+            document.getElementById('prop-opacity').value = layerObj.opacity;
+        }
+
+        function selectLayer(layerObj) {
+            if(!layerObj.visible) return; // No seleccionar si está oculta
+            
+            layers.forEach(l => l.div.classList.remove('selected'));
+            layerObj.div.classList.add('selected');
+            selectedIndex = layers.findIndex(l => l.id === layerObj.id);
+
+            document.getElementById('no-selection').classList.add('hidden');
+            document.getElementById('properties').classList.remove('hidden');
+
+            updatePanelValues(layerObj);
+            renderLayersList(); // Re-renderizar para marcar como activa en la lista
+        }
+
+        window.liveUpdate = function(sourceInput) {
+            if (selectedIndex === -1) return;
+            const l = layers[selectedIndex];
+
+            if (sourceInput) {
+                if (sourceInput.id === 'prop-rot') {
+                    document.getElementById('prop-rot-num').value = sourceInput.value;
+                } else if (sourceInput.id === 'prop-rot-num') {
+                    document.getElementById('prop-rot').value = sourceInput.value;
+                }
+            }
+
+            l.x = parseFloat(document.getElementById('prop-x').value) || 0;
+            l.y = parseFloat(document.getElementById('prop-y').value) || 0;
+            l.w = parseFloat(document.getElementById('prop-w').value) || 100;
+            l.h = parseFloat(document.getElementById('prop-h').value) || 100;
+            l.rot = parseFloat(document.getElementById('prop-rot').value) || 0;
+            l.opacity = parseFloat(document.getElementById('prop-opacity').value) || 1;
+
+            l.div.style.left = l.x + 'px';
+            l.div.style.top = l.y + 'px';
+            l.div.style.width = l.w + 'px';
+            l.div.style.height = l.h + 'px';
+            l.div.style.transform = `rotate(${l.rot}deg)`;
+            l.img.style.opacity = l.opacity;
+
+            if (!document.getElementById('lock-ratio').checked) {
+                l.ratio = l.w / l.h;
+            }
+        };
+
+        function deleteSelected() {
+            if (selectedIndex === -1) return;
+            const layer = layers[selectedIndex];
+            canvas.removeChild(layer.div);
+            layers.splice(selectedIndex, 1);
+            selectedIndex = -1;
+            document.getElementById('properties').classList.add('hidden');
+            document.getElementById('no-selection').classList.remove('hidden');
+            renderLayersList();
+        }
+
+        function clearAll() {
+            if(layers.length === 0) return;
+            if (confirm("¿Estás seguro de borrar todo el lienzo?")) {
+                canvas.innerHTML = '';
+                layers = [];
+                selectedIndex = -1;
+                currentZ = 100;
+                document.getElementById('properties').classList.add('hidden');
+                document.getElementById('no-selection').classList.remove('hidden');
+                renderLayersList();
+            }
+        }
+
+        function handleFileSelect(e) {
+            Array.from(e.target.files).forEach(file => {
+                if (file.type.startsWith('image/')) addImage(file);
+            });
+        }
+
+        function setupDropZone() {
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('border-blue-500', 'bg-blue-950/30'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-blue-500', 'bg-blue-950/30'));
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-950/30');
+                Array.from(e.dataTransfer.files).forEach(file => { if (file.type.startsWith('image/')) addImage(file); });
+            });
+        }
+
+        async function exportToFolder() {
+            if (layers.length === 0) {
+                alert("Añade al menos una imagen antes de exportar");
+                return;
+            }
+
+            const zip = new JSZip();
+            const imagesFolder = zip.folder("images");
+
+            let htmlContent = `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Mi Collage</title>
+<style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;}#canvas{position:relative;background:white;overflow:hidden;}img{position:absolute;transform-origin:center;}</style>
+</head><body><div id="canvas" style="width:${canvas.style.width}; height:${canvas.style.height};">`;
+
+            // Exportar respetando el Z-index y la visibilidad
+            const visibleLayers = layers.filter(l => l.visible).sort((a, b) => a.zIndex - b.zIndex);
+
+            visibleLayers.forEach((layer, i) => {
+                const ext = layer.file.name.split('.').pop().toLowerCase();
+                const filename = `img-${i + 1}.${ext}`;
+                imagesFolder.file(filename, layer.file);
+
+                htmlContent += `\n<img src="images/${filename}" style="left:${layer.x}px; top:${layer.y}px; width:${layer.w}px; height:${layer.h}px; transform:rotate(${layer.rot}deg); opacity:${layer.opacity}; z-index:${layer.zIndex}; object-fit:contain;">`;
+            });
+
+            htmlContent += `\n</div></body></html>`;
+            zip.file("index.html", htmlContent);
+
+            const blob = await zip.generateAsync({type: "blob"});
+            saveAs(blob, "mi-collage.zip");
+        }
+
+        window.onload = () => {
+            setupDropZone();
+            renderLayersList(); // Render inicial vacío
+            
+            canvas.addEventListener('dragover', e => e.preventDefault());
+            canvas.addEventListener('drop', e => {
+                e.preventDefault();
+                Array.from(e.dataTransfer.files).forEach(file => { if (file.type.startsWith('image/')) addImage(file); });
+            });
+
+            document.addEventListener('keydown', e => {
+                if (e.key === "Delete" && selectedIndex !== -1 && document.activeElement.tagName !== 'INPUT') {
+                    deleteSelected();
+                }
+            });
+
+            document.getElementById('drop-zone').addEventListener('click', () => {
+                document.getElementById('file-input').click();
+            });
+        };
+    </script>
+</body>
+</html>
