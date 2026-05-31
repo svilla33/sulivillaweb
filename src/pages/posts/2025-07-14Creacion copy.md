@@ -8,7 +8,7 @@ description: "fecha de creacion del blog!"
 #    url: "https://docs.astro.build/default-og-image.png"
 #    alt: "The word astro against an illustration of planets and stars."
 pubDate: 2026 05 30
-#tags: ["test"]
+tags: ["blog"]
 ---
 
 # las redes no son sociales
